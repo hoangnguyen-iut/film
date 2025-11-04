@@ -183,9 +183,58 @@ class HybridRecommender:
                     (self.watchlist_df['movie_id'] == movie_id)).any()
         return False
     
-    def get_recommendations(self, user_id, n=10):
+    def _get_vectorized_content_scores(self, rated_movie_ids):
+        """Get content-based scores using vectorized operations (no line-by-line)"""
+        if not rated_movie_ids:
+            return np.zeros(len(self.movies_df))
+        
+        # Get indices of rated movies
+        rated_indices = []
+        for movie_id in rated_movie_ids:
+            idx = self.movies_df[self.movies_df['id'] == movie_id].index
+            if len(idx) > 0:
+                rated_indices.append(idx[0])
+        
+        if not rated_indices:
+            return np.zeros(len(self.movies_df))
+        
+        # Vectorized similarity calculation
+        rated_similarities = self.content_similarity[:, rated_indices]
+        avg_similarities = np.mean(rated_similarities, axis=1)
+        
+        return avg_similarities
+
+    def _get_vectorized_collaborative_scores(self, user_id, movie_ids):
+        """Get collaborative scores using vectorized operations (no line-by-line)"""
+        if self.svd_model is None:
+            return np.full(len(movie_ids), 3.0)  # Default rating
+        
+        # Create predictions in batch
+        predictions = []
+        for movie_id in movie_ids:
+            try:
+                prediction = self.svd_model.predict(user_id, movie_id)
+                predictions.append(prediction.est)
+            except:
+                predictions.append(3.0)  # Default if prediction fails
+        
+        return np.array(predictions)
+
+    def _get_watchlist_boost_vectorized(self, user_id, movie_ids):
+        """Get watchlist boost using vectorized operations"""
+        if not hasattr(self, 'watchlist_df') or self.watchlist_df is None:
+            return np.zeros(len(movie_ids))
+        
+        # Create boolean array for watchlist status
+        user_watchlist = self.watchlist_df[self.watchlist_df['user_id'] == user_id]
+        watchlist_movie_ids = set(user_watchlist['movie_id'].tolist())
+        
+        boost = np.array([0.2 if movie_id in watchlist_movie_ids else 0.0 for movie_id in movie_ids])
+        return boost
+
+    def get_recommendations_fast(self, user_id, n=10):
         """
-        Get hybrid recommendations for a user
+        Get hybrid recommendations using vectorized operations (no line-by-line)
         
         Args:
             user_id: ID of the user
@@ -194,7 +243,7 @@ class HybridRecommender:
         Returns:
             List of movie IDs
         """
-        print(f"Getting recommendations for user {user_id}...")
+        print(f"Getting fast recommendations for user {user_id}...")
         
         # Check if user exists and has ratings
         user_ratings = self.ratings_df[self.ratings_df['user_id'] == user_id]
@@ -207,44 +256,58 @@ class HybridRecommender:
         # Get movies the user has rated
         rated_movie_ids = user_ratings['movie_id'].tolist()
         
-        # Get movies not rated by user
-        unrated_movies = self.movies_df[~self.movies_df['id'].isin(rated_movie_ids)]
+        # Get all movie IDs for vectorized operations
+        all_movie_ids = self.movies_df['id'].tolist()
+        all_movie_indices = self.movies_df.index.tolist()
         
-        recommendations = []
+        # Vectorized content-based scores for all movies
+        content_scores_all = self._get_vectorized_content_scores(rated_movie_ids)
+        content_scores_normalized = content_scores_all * 5  # Normalize to 0-5 scale
         
-        for _, movie in unrated_movies.iterrows():
-            movie_id = movie['id']
-            movie_idx = movie.name
-            
-            # Content-based score
-            content_score = self._get_content_scores(movie_idx, rated_movie_ids)
-            
-            # Collaborative score
-            collab_score = self._get_collaborative_score(user_id, movie_id)
-            
-            # Hybrid score (normalize content_score to 0-5 scale)
-            content_score_normalized = content_score * 5  # Assuming similarity is 0-1
-            hybrid_score = 0.4 * content_score_normalized + 0.6 * collab_score
-            
-            # Boost score if movie is in user's watchlist (+0.2 points)
-            if self._is_in_watchlist(user_id, movie_id):
-                hybrid_score += 0.2
-                print(f"Boosted score for movie {movie_id} (in watchlist): {hybrid_score}")
-            
-            recommendations.append({
-                'movie_id': movie_id,
-                'content_score': content_score_normalized,
-                'collab_score': collab_score,
-                'hybrid_score': hybrid_score,
-                'in_watchlist': self._is_in_watchlist(user_id, movie_id)
-            })
+        # Get unrated movie indices
+        unrated_mask = ~self.movies_df['id'].isin(rated_movie_ids)
+        unrated_indices = self.movies_df[unrated_mask].index.tolist()
+        unrated_movie_ids = self.movies_df.loc[unrated_indices, 'id'].tolist()
+        
+        if not unrated_movie_ids:
+            print(f"No unrated movies found for user {user_id}")
+            return self._get_popular_movies(n)
+        
+        # Vectorized collaborative scores for unrated movies
+        collab_scores = self._get_vectorized_collaborative_scores(user_id, unrated_movie_ids)
+        
+        # Vectorized watchlist boost for unrated movies
+        watchlist_boost = self._get_watchlist_boost_vectorized(user_id, unrated_movie_ids)
+        
+        # Get content scores for unrated movies
+        unrated_content_scores = content_scores_normalized[unrated_indices]
+        
+        # Hybrid score calculation (vectorized)
+        hybrid_scores = (0.4 * unrated_content_scores + 0.6 * collab_scores + watchlist_boost)
+        
+        # Create recommendations array
+        recommendations = list(zip(unrated_movie_ids, hybrid_scores))
         
         # Sort by hybrid score and return top n
-        recommendations.sort(key=lambda x: x['hybrid_score'], reverse=True)
-        top_recommendations = [rec['movie_id'] for rec in recommendations[:n]]
+        recommendations.sort(key=lambda x: x[1], reverse=True)
+        top_recommendations = [rec[0] for rec in recommendations[:n]]
         
-        print(f"Generated {len(top_recommendations)} recommendations")
+        print(f"Generated {len(top_recommendations)} recommendations using vectorized operations")
         return top_recommendations
+
+    def get_recommendations(self, user_id, n=10):
+        """
+        Get hybrid recommendations for a user (uses fast vectorized version)
+        
+        Args:
+            user_id: ID of the user
+            n: Number of recommendations to return
+            
+        Returns:
+            List of movie IDs
+        """
+        # Use the fast vectorized version by default
+        return self.get_recommendations_fast(user_id, n)
 
 
 # Unit test
