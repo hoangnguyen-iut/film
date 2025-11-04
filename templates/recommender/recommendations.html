@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4 mt-3">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="section-title mb-2">
+                <i class="bi bi-heart-fill text-danger me-2"></i>Recommended for You
+            </h1>
+            <p class="text-muted mb-0">Movies tailored to your taste based on your ratings</p>
+        </div>
+        <span class="badge bg-danger fs-6">{{ recommended_movies|length }} movies</span>
+    </div>
+
+    {% if recommended_movies %}
+    <!-- Recommendations Grid -->
+    <section class="movie-row mb-5">
+        <div class="row movies-container" data-category="recommended">
+            {% for movie in recommended_movies %}
+            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="movie-card" data-movie-id="{{ movie.id }}">
+                    <div class="movie-poster-container">
+                        {% if movie.poster_url %}
+                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="movie-poster"
+                             onerror="this.src='https://via.placeholder.com/300x450/333333/ffffff?text=No+Image'">
+                        {% else %}
+                        <div class="movie-poster bg-secondary d-flex align-items-center justify-content-center">
+                            <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
+                        </div>
+                        {% endif %}
+                        <div class="movie-overlay">
+                            <div class="movie-info">
+                                <h6 class="movie-title">{{ movie.title }}</h6>
+                                <p class="movie-meta">
+                                    <span class="release-year">{{ movie.release_year }}</span>
+                                    <span class="genre">{{ movie.genre|default:"Unknown"|truncatewords:3 }}</span>
+                                </p>
+                                <div class="movie-rating mb-2">
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <span class="ms-1">{{ movie.avg_rating|default:"N/A" }}</span>
+                                </div>
+                                <div class="movie-actions">
+                                    <button class="btn btn-sm btn-danger play-btn" 
+                                            data-movie-id="{{ movie.id }}"
+                                            data-movie-title="{{ movie.title }}">
+                                        <i class="bi bi-play-fill"></i> Play
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-light rate-btn"
+                                            data-movie-id="{{ movie.id }}"
+                                            data-movie-title="{{ movie.title }}">
+                                        <i class="bi bi-star"></i> Rate
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Load More Trigger -->
+        <div class="load-more-trigger"></div>
+    </section>
+
+    <!-- Recently Rated Movies -->
+    {% if user_ratings %}
+    <section class="movie-row mb-5">
+        <h2 class="section-title mb-4">
+            <i class="bi bi-star-fill text-warning me-2"></i>Your Rated Movies
+        </h2>
+        <div class="row">
+            {% for rating in user_ratings %}
+            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="movie-card" data-movie-id="{{ rating.movie.id }}">
+                    <div class="movie-poster-container">
+                        {% if rating.movie.poster_url %}
+                        <img src="{{ rating.movie.poster_url }}" alt="{{ rating.movie.title }}" class="movie-poster"
+                             onerror="this.src='https://via.placeholder.com/300x450/333333/ffffff?text=No+Image'">
+                        {% else %}
+                        <div class="movie-poster bg-secondary d-flex align-items-center justify-content-center">
+                            <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
+                        </div>
+                        {% endif %}
+                        <div class="movie-overlay">
+                            <div class="movie-info">
+                                <h6 class="movie-title">{{ rating.movie.title }}</h6>
+                                <p class="movie-meta">
+                                    <span class="release-year">{{ rating.movie.release_year }}</span>
+                                    <span class="genre">{{ rating.movie.genre|default:"Unknown"|truncatewords:3 }}</span>
+                                </p>
+                                <div class="movie-rating mb-2">
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <span class="ms-1">{{ rating.rating }}</span>
+                                </div>
+                                <div class="movie-actions">
+                                    <button class="btn btn-sm btn-danger play-btn" 
+                                            data-movie-id="{{ rating.movie.id }}"
+                                            data-movie-title="{{ rating.movie.title }}">
+                                        <i class="bi bi-play-fill"></i> Play
+                                    </button>
+                                    <button class="btn btn-sm btn-warning rate-btn"
+                                            data-movie-id="{{ rating.movie.id }}"
+                                            data-movie-title="{{ rating.movie.title }}"
+                                            data-current-rating="{{ rating.rating }}">
+                                        <i class="bi bi-star-fill"></i> {{ rating.rating }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="bi bi-heart display-1 text-muted"></i>
+        <h3 class="text-muted mt-3">No recommendations yet</h3>
+        <p class="text-muted mb-4">Rate some movies to get personalized recommendations!</p>
+        <div class="hero-buttons">
+            <a href="{% url 'recommender:search' %}" class="btn btn-danger btn-lg me-3">
+                <i class="bi bi-search"></i> Browse Movies
+            </a>
+            <a href="{% url 'recommender:home' %}" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-house"></i> Back to Home
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Rating Modal -->
+<div class="modal fade" id="ratingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark-custom text-light">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Rate <span id="movieTitle"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ratingForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="movie_id" id="modalMovieId">
+                    <div class="mb-3">
+                        <label class="form-label text-light">Your Rating (1-5 stars)</label>
+                        <div class="rating-stars mb-3 text-center">
+                            {% for i in "12345" %}
+                            <button type="button" class="btn btn-outline-warning star-btn" data-rating="{{ i }}">
+                                <i class="bi bi-star"></i> {{ i }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <input type="number" class="form-control bg-dark text-light border-secondary" 
+                               name="rating" id="ratingInput" min="1" max="5" step="0.5" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="ratingForm" class="btn btn-danger">Submit Rating</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function(){
+    // Initialize carousels
+    $('.movie-carousel').owlCarousel({
+        loop: true,
+        margin: 15,
+        nav: true,
+        dots: false,
+        responsive: {
+            0: { items: 2 },
+            576: { items: 3 },
+            768: { items: 4 },
+            992: { items: 5 },
+            1200: { items: 6 }
+        },
+        navText: ['<i class="bi bi-chevron-left"></i>', '<i class="bi bi-chevron-right"></i>']
+    });
+});
+
+// Rating modal functionality for recommendations page
+document.addEventListener('DOMContentLoaded', function() {
+    const ratingModal = new bootstrap.Modal(document.getElementById('ratingModal'));
+    const movieTitleSpan = document.getElementById('movieTitle');
+    const modalMovieId = document.getElementById('modalMovieId');
+    const ratingInput = document.getElementById('ratingInput');
+    const starButtons = document.querySelectorAll('.star-btn');
+    
+    document.querySelectorAll('.rate-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const movieId = this.dataset.movieId;
+            const movieTitle = this.dataset.movieTitle;
+            const currentRating = this.dataset.currentRating;
+            
+            movieTitleSpan.textContent = movieTitle;
+            modalMovieId.value = movieId;
+            ratingInput.value = currentRating || '3.0';
+            
+            // Reset star buttons
+            starButtons.forEach(star => {
+                star.classList.remove('btn-warning');
+                star.classList.add('btn-outline-warning');
+            });
+            
+            // Highlight stars up to current rating
+            if (currentRating) {
+                starButtons.forEach(star => {
+                    if (star.dataset.rating <= currentRating) {
+                        star.classList.add('btn-warning');
+                        star.classList.remove('btn-outline-warning');
+                    }
+                });
+            }
+            
+            ratingModal.show();
+        });
+    });
+    
+    // Star rating selection
+    starButtons.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = this.dataset.rating;
+            ratingInput.value = rating;
+            
+            // Update star buttons appearance
+            starButtons.forEach(s => {
+                if (s.dataset.rating <= rating) {
+                    s.classList.add('btn-warning');
+                    s.classList.remove('btn-outline-warning');
+                } else {
+                    s.classList.remove('btn-warning');
+                    s.classList.add('btn-outline-warning');
+                }
+            });
+        });
+    });
+    
+    // Form submission
+    document.getElementById('ratingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const movieId = modalMovieId.value;
+        
+        fetch(`/movie/${movieId}/rate/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show';
+                alert.innerHTML = `
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('main').insertBefore(alert, document.querySelector('main').firstChild);
+                
+                ratingModal.hide();
+                
+                // Reload page to update recommendations
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                alert('Error: ' + JSON.stringify(data.errors));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while submitting your rating.');
+        });
+    });
+});
+</script>
+{% endblock %}

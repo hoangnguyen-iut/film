@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            {% if movie.poster_url %}
+            <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}" 
+                 style="max-height: 500px; object-fit: cover;">
+            {% else %}
+            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                 style="height: 500px;">
+                <i class="bi bi-film text-light" style="font-size: 4rem;"></i>
+            </div>
+            {% endif %}
+            
+            <div class="card-body text-center">
+                <h2 class="h4">{{ movie.title }}</h2>
+                <p class="text-muted mb-2">
+                    <i class="bi bi-calendar"></i> {{ movie.release_year }}
+                </p>
+                
+                <div class="mb-3">
+                    {% for genre in movie.genre|split:"|" %}
+                    <span class="badge bg-info text-dark me-1 mb-1">{{ genre }}</span>
+                    {% endfor %}
+                </div>
+                
+                {% if user.is_authenticated %}
+                <div class="mt-4">
+                    <h5 class="h6">Your Rating</h5>
+                    {% if user_rating %}
+                    <div class="d-flex align-items-center justify-content-center mb-3">
+                        <span class="display-6 text-warning me-2">{{ user_rating.rating }}</span>
+                        <i class="bi bi-star-fill text-warning" style="font-size: 1.5rem;"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#ratingModal">
+                        <i class="bi bi-star{% if user_rating %}-fill{% endif %}"></i>
+                        {% if user_rating %}Update Rating{% else %}Rate This Movie{% endif %}
+                    </button>
+                </div>
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-star"></i> Login to Rate
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title h4 mb-3">Movie Details</h3>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Director:</strong> {{ movie.director }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>TMDb ID:</strong> {{ movie.tmdb_id }}</p>
+                    </div>
+                </div>
+                
+                <h5 class="h6">Overview</h5>
+                <p class="card-text">{{ movie.overview|default:"No overview available." }}</p>
+            </div>
+        </div>
+        
+        {% if similar_movies %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h4 class="h5 mb-3">
+                    <i class="bi bi-lightning text-warning"></i> Similar Movies
+                </h4>
+                
+                <div class="row">
+                    {% for similar_movie in similar_movies %}
+                    <div class="col-xl-4 col-lg-6 col-md-6 mb-3">
+                        <div class="card h-100">
+                            {% if similar_movie.poster_url %}
+                            <img src="{{ similar_movie.poster_url }}" class="card-img-top" alt="{{ similar_movie.title }}" 
+                                 style="height: 200px; object-fit: cover;">
+                            {% else %}
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                                 style="height: 200px;">
+                                <i class="bi bi-film text-light"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <h6 class="card-title">{{ similar_movie.title }}</h6>
+                                <p class="card-text small text-muted">
+                                    {{ similar_movie.release_year }} • {{ similar_movie.genre|truncatewords:2 }}
+                                </p>
+                                <a href="{% url 'recommender:movie_detail' similar_movie.id %}" 
+                                   class="btn btn-outline-primary btn-sm w-100">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Rating Modal -->
+{% if user.is_authenticated %}
+<div class="modal fade" id="ratingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rate "{{ movie.title }}"</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ratingForm" method="post" action="{% url 'recommender:rate_movie' movie.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Your Rating (1-5 stars)</label>
+                        <div class="rating-stars mb-3 text-center">
+                            {% for i in "12345" %}
+                            <button type="button" class="btn btn-outline-warning star-btn" data-rating="{{ i }}">
+                                <i class="bi bi-star{% if user_rating and user_rating.rating >= i|add:0 %}fill{% endif %}"></i> {{ i }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <input type="number" class="form-control" name="rating" id="ratingInput" 
+                               value="{{ user_rating.rating|default:'3.0' }}" min="1" max="5" step="0.5" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="ratingForm" class="btn btn-primary">Submit Rating</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if user.is_authenticated %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ratingInput = document.getElementById('ratingInput');
+    const starButtons = document.querySelectorAll('.star-btn');
+    
+    // Initialize star buttons based on current rating
+    const currentRating = parseFloat(ratingInput.value);
+    starButtons.forEach(star => {
+        if (parseFloat(star.dataset.rating) <= currentRating) {
+            star.classList.add('btn-warning');
+            star.classList.remove('btn-outline-warning');
+            star.querySelector('i').classList.add('bi-star-fill');
+            star.querySelector('i').classList.remove('bi-star');
+        }
+    });
+    
+    // Star rating selection
+    starButtons.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = this.dataset.rating;
+            ratingInput.value = rating;
+            
+            // Update star buttons appearance
+            starButtons.forEach(s => {
+                const starIcon = s.querySelector('i');
+                if (s.dataset.rating <= rating) {
+                    s.classList.add('btn-warning');
+                    s.classList.remove('btn-outline-warning');
+                    starIcon.classList.add('bi-star-fill');
+                    starIcon.classList.remove('bi-star');
+                } else {
+                    s.classList.remove('btn-warning');
+                    s.classList.add('btn-outline-warning');
+                    starIcon.classList.remove('bi-star-fill');
+                    starIcon.classList.add('bi-star');
+                }
+            });
+        });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

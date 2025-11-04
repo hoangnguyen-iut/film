@@ -1,6 +1,6 @@
 Django>=4.0
 pandas
-numpy
+numpy<2.0
 scikit-learn
-surprise
+scikit-surprise
 requests

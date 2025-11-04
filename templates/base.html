@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieFlix - Your Personal Movie Recommender</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Owl Carousel CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+    <!-- Netflix Style CSS -->
+    <link href="/static/css/netflix-style.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark-custom fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold text-danger fs-3" href="{% url 'recommender:home' %}">
+                <i class="bi bi-play-btn-fill"></i> MovieFlix
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'recommender:home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'recommender:search' %}">Browse</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'recommender:recommendations' %}">My List</a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <!-- Search Bar with Autocomplete -->
+                <div class="d-flex me-3 position-relative" id="searchContainer">
+                    <form class="d-flex" method="get" action="{% url 'recommender:search' %}">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control bg-dark text-light border-secondary" 
+                                   placeholder="Search movies..." name="q" autocomplete="off">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                    <!-- Autocomplete Results -->
+                    <div id="autocompleteResults" class="autocomplete-results"></div>
+                </div>
+                
+                <!-- Mobile Search Toggle -->
+                <button class="btn btn-outline-light d-lg-none ms-2" id="searchToggle">
+                    <i class="bi bi-search"></i>
+                </button>
+                
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="{% url 'recommender:recommendations' %}">My Recommendations</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'recommender:logout' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'recommender:login' %}">Sign In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'recommender:register' %}">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="container-fluid mt-5 pt-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="container-fluid px-4 mt-5 pt-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black text-secondary py-5 mt-5">
+        <div class="container text-center">
+            <p class="mb-1">&copy; 2024 MovieFlix. Built with Django & Bootstrap 5.</p>
+            <p class="small">This is a demo application for educational purposes.</p>
+        </div>
+    </footer>
+
+    <!-- Movie Preview Modal -->
+    <div class="modal fade" id="moviePreviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="previewMovieTitle">Movie Title</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img id="previewMoviePoster" src="" alt="Movie Poster" class="img-fluid rounded">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <span class="badge bg-danger me-2" id="previewMovieYear"></span>
+                                <span class="badge bg-info" id="previewMovieGenre"></span>
+                            </div>
+                            <p id="previewMovieOverview" class="mb-3"></p>
+                            <p><strong>Director:</strong> <span id="previewMovieDirector"></span></p>
+                            
+                            <div class="movie-actions mt-4">
+                                <button class="btn btn-danger me-2" id="previewPlayBtn">
+                                    <i class="bi bi-play-fill"></i> Play Trailer
+                                </button>
+                                <button class="btn btn-outline-light me-2" id="previewWatchlistBtn">
+                                    <i class="bi bi-bookmark-plus"></i> Add to Watchlist
+                                </button>
+                                <a href="#" class="btn btn-outline-secondary" id="previewDetailsBtn">
+                                    <i class="bi bi-info-circle"></i> More Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fake trailer placeholder -->
+                    <div class="mt-4" id="trailerPlaceholder">
+                        <div class="ratio ratio-16x9 bg-black rounded">
+                            <div class="d-flex align-items-center justify-content-center text-muted">
+                                <div class="text-center">
+                                    <i class="bi bi-play-circle display-1 text-danger"></i>
+                                    <p class="mt-2">Trailer Preview</p>
+                                    <small class="text-muted">(Demo - No actual video)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery and jQuery UI for autocomplete -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Owl Carousel JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="/static/js/carousel.js"></script>
+    <script src="/static/js/watchlist.js"></script>
+    <script src="/static/js/autocomplete.js"></script>
+    <script src="/static/js/infinite-scroll.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Movie Preview JS -->
+    <script>
+    class MoviePreview {
+        constructor() {
+            this.modal = new bootstrap.Modal(document.getElementById('moviePreviewModal'));
+            this.init();
+        }
+
+        init() {
+            // Add event listeners to modal buttons
+            document.getElementById('previewPlayBtn').addEventListener('click', () => this.playTrailer());
+            document.getElementById('previewWatchlistBtn').addEventListener('click', () => this.toggleWatchlist());
+        }
+
+        show(movie) {
+            // Update modal content with movie data
+            document.getElementById('previewMovieTitle').textContent = movie.title;
+            document.getElementById('previewMoviePoster').src = movie.poster_url || 'https://via.placeholder.com/300x450/333333/ffffff?text=No+Image';
+            document.getElementById('previewMoviePoster').alt = movie.title;
+            document.getElementById('previewMovieYear').textContent = movie.release_year;
+            document.getElementById('previewMovieGenre').textContent = movie.genre?.split('|')[0] || 'Unknown';
+            document.getElementById('previewMovieOverview').textContent = movie.overview || 'No overview available.';
+            document.getElementById('previewMovieDirector').textContent = movie.director || 'Unknown';
+            document.getElementById('previewDetailsBtn').href = `/movie/${movie.id}/`;
+
+            // Update watchlist button state
+            this.updateWatchlistButton(movie.id);
+
+            // Show modal
+            this.modal.show();
+        }
+
+        updateWatchlistButton(movieId) {
+            const watchlistBtn = document.getElementById('previewWatchlistBtn');
+            // Check if movie is in watchlist (you might want to make an API call here)
+            // For now, we'll assume it's not in watchlist
+            watchlistBtn.innerHTML = '<i class="bi bi-bookmark-plus"></i> Add to Watchlist';
+            watchlistBtn.classList.remove('btn-success');
+            watchlistBtn.classList.add('btn-outline-light');
+            watchlistBtn.dataset.movieId = movieId;
+        }
+
+        playTrailer() {
+            // Show fake trailer animation
+            const trailer = document.getElementById('trailerPlaceholder');
+            trailer.innerHTML = `
+                <div class="ratio ratio-16x9 bg-black rounded">
+                    <div class="d-flex align-items-center justify-content-center text-muted">
+                        <div class="text-center">
+                            <i class="bi bi-play-circle display-1 text-danger"></i>
+                            <p class="mt-2">Playing Trailer...</p>
+                            <small class="text-muted">(Demo - No actual video)</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        toggleWatchlist() {
+            const watchlistBtn = document.getElementById('previewWatchlistBtn');
+            const movieId = watchlistBtn.dataset.movieId;
+            
+            if (window.WatchlistManager) {
+                window.WatchlistManager.addToWatchlist(movieId, document.getElementById('previewMovieTitle').textContent)
+                    .then(response => {
+                        if (response.success) {
+                            if (response.action === 'added') {
+                                watchlistBtn.innerHTML = '<i class="bi bi-bookmark-check-fill"></i> In Watchlist';
+                                watchlistBtn.classList.remove('btn-outline-light');
+                                watchlistBtn.classList.add('btn-success');
+                            } else {
+                                watchlistBtn.innerHTML = '<i class="bi bi-bookmark-plus"></i> Add to Watchlist';
+                                watchlistBtn.classList.remove('btn-success');
+                                watchlistBtn.classList.add('btn-outline-light');
+                            }
+                        }
+                    });
+            }
+        }
+    }
+
+    // Initialize movie preview when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        window.MoviePreview = new MoviePreview();
+    });
+    </script>
+</body>
+</html>

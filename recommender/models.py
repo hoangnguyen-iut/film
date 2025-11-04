@@ -26,3 +26,17 @@ class Rating(models.Model):
     
     class Meta:
         unique_together = ('user', 'movie')  # Prevent duplicate ratings
+
+
+class Watchlist(models.Model):
+    """User's watchlist for movies they want to watch later"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    added_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.username}'s watchlist - {self.movie.title}"
+    
+    class Meta:
+        unique_together = ('user', 'movie')  # Prevent duplicate entries
+        ordering = ['-added_at']

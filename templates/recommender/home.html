@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section mb-5" style="height: 70vh; background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1489599809505-7c8e45128d6f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'); background-size: cover; background-position: center;">
+    <div class="container h-100 d-flex align-items-center">
+        <div class="hero-content text-white">
+            <h1 class="display-4 fw-bold mb-3">Unlimited movies, TV shows, and more.</h1>
+            <p class="lead mb-4">Watch anywhere. Cancel anytime.</p>
+            {% if not user.is_authenticated %}
+            <div class="hero-buttons">
+                <a href="{% url 'recommender:register' %}" class="btn btn-danger btn-lg me-3">
+                    Get Started <i class="bi bi-arrow-right"></i>
+                </a>
+                <a href="{% url 'recommender:login' %}" class="btn btn-outline-light btn-lg">
+                    Sign In
+                </a>
+            </div>
+            {% else %}
+            <div class="hero-buttons">
+                <a href="{% url 'recommender:search' %}" class="btn btn-danger btn-lg me-3">
+                    Browse Movies <i class="bi bi-play-fill"></i>
+                </a>
+                <a href="{% url 'recommender:recommendations' %}" class="btn btn-outline-light btn-lg">
+                    My Recommendations
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Movie Rows -->
+<div class="container-fluid px-4">
+    <!-- Top Rated Movies -->
+    <section class="movie-row mb-5">
+        <h2 class="section-title mb-4">
+            <i class="bi bi-star-fill text-warning me-2"></i>Top Rated Movies
+        </h2>
+        <div class="owl-carousel owl-theme movie-carousel">
+            {% for movie in top_rated_movies %}
+            <div class="movie-card">
+                <div class="card bg-dark border-0 movie-poster-card">
+                    {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}" 
+                         onerror="this.src='https://via.placeholder.com/300x450/333333/ffffff?text=No+Image'">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                         style="height: 300px;">
+                        <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card-overlay">
+                        <div class="overlay-content">
+                            <h6 class="movie-title">{{ movie.title }}</h6>
+                            <p class="movie-year small text-muted">{{ movie.release_year }}</p>
+                            <div class="movie-rating">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <span class="ms-1">{{ movie.avg_rating|default:"N/A" }}</span>
+                            </div>
+                            <div class="movie-actions mt-2">
+                                <a href="{% url 'recommender:movie_detail' movie.id %}" 
+                                   class="btn btn-sm btn-outline-light me-1">
+                                    <i class="bi bi-info-circle"></i>
+                                </a>
+                                {% if user.is_authenticated %}
+                                <button class="btn btn-sm btn-danger rate-btn" 
+                                        data-movie-id="{{ movie.id }}"
+                                        data-movie-title="{{ movie.title }}">
+                                    <i class="bi bi-play-fill"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Popular Movies -->
+    <section class="movie-row mb-5">
+        <h2 class="section-title mb-4">
+            <i class="bi bi-fire text-danger me-2"></i>Popular Now
+        </h2>
+        <div class="owl-carousel owl-theme movie-carousel">
+            {% for movie in popular_movies %}
+            <div class="movie-card">
+                <div class="card bg-dark border-0 movie-poster-card">
+                    {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}"
+                         onerror="this.src='https://via.placeholder.com/300x450/333333/ffffff?text=No+Image'">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                         style="height: 300px;">
+                        <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card-overlay">
+                        <div class="overlay-content">
+                            <h6 class="movie-title">{{ movie.title }}</h6>
+                            <p class="movie-year small text-muted">{{ movie.release_year }}</p>
+                            <div class="movie-rating">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <span class="ms-1">{{ movie.avg_rating|default:"N/A" }}</span>
+                            </div>
+                            <div class="movie-actions mt-2">
+                                <a href="{% url 'recommender:movie_detail' movie.id %}" 
+                                   class="btn btn-sm btn-outline-light me-1">
+                                    <i class="bi bi-info-circle"></i>
+                                </a>
+                                {% if user.is_authenticated %}
+                                <button class="btn btn-sm btn-danger rate-btn" 
+                                        data-movie-id="{{ movie.id }}"
+                                        data-movie-title="{{ movie.title }}">
+                                    <i class="bi bi-play-fill"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Recommended for You (only for authenticated users) -->
+    {% if user.is_authenticated and recommended_movies %}
+    <section class="movie-row mb-5">
+        <h2 class="section-title mb-4">
+            <i class="bi bi-heart-fill text-danger me-2"></i>Recommended for You
+        </h2>
+        <div class="owl-carousel owl-theme movie-carousel">
+            {% for movie in recommended_movies %}
+            <div class="movie-card">
+                <div class="card bg-dark border-0 movie-poster-card">
+                    {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}"
+                         onerror="this.src='https://via.placeholder.com/300x450/333333/ffffff?text=No+Image'">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                         style="height: 300px;">
+                        <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card-overlay">
+                        <div class="overlay-content">
+                            <h6 class="movie-title">{{ movie.title }}</h6>
+                            <p class="movie-year small text-muted">{{ movie.release_year }}</p>
+                            <div class="movie-rating">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <span class="ms-1">{{ movie.avg_rating|default:"N/A" }}</span>
+                            </div>
+                            <div class="movie-actions mt-2">
+                                <a href="{% url 'recommender:movie_detail' movie.id %}" 
+                                   class="btn btn-sm btn-outline-light me-1">
+                                    <i class="bi bi-info-circle"></i>
+                                </a>
+                                <button class="btn btn-sm btn-danger rate-btn" 
+                                        data-movie-id="{{ movie.id }}"
+                                        data-movie-title="{{ movie.title }}">
+                                    <i class="bi bi-play-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Browse by Genre -->
+    <section class="movie-row mb-5">
+        <h2 class="section-title mb-4">
+            <i class="bi bi-collection-play text-info me-2"></i>Browse by Genre
+        </h2>
+        <div class="row">
+            {% for genre in genres %}
+            <div class="col-6 col-md-4 col-lg-2 mb-3">
+                <a href="{% url 'recommender:search' %}?genre={{ genre|urlencode }}" 
+                   class="genre-card text-decoration-none">
+                    <div class="card bg-secondary border-0 genre-card-inner">
+                        <div class="card-body text-center">
+                            <i class="bi bi-tags display-6 text-light mb-2"></i>
+                            <h6 class="text-light mb-0">{{ genre }}</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<!-- Rating Modal -->
+{% if user.is_authenticated %}
+<div class="modal fade" id="ratingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Rate <span id="movieTitle"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ratingForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="movie_id" id="modalMovieId">
+                    <div class="mb-3">
+                        <label class="form-label">Your Rating (1-5 stars)</label>
+                        <div class="rating-stars mb-3 text-center">
+                            {% for i in "12345" %}
+                            <button type="button" class="btn btn-outline-warning star-btn" data-rating="{{ i }}">
+                                <i class="bi bi-star"></i> {{ i }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <input type="number" class="form-control bg-dark text-light border-secondary" 
+                               name="rating" id="ratingInput" min="1" max="5" step="0.5" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="ratingForm" class="btn btn-danger">Submit Rating</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function(){
+    // Initialize carousels
+    $('.movie-carousel').owlCarousel({
+        loop: true,
+        margin: 15,
+        nav: true,
+        dots: false,
+        responsive: {
+            0: { items: 2 },
+            576: { items: 3 },
+            768: { items: 4 },
+            992: { items: 5 },
+            1200: { items: 6 }
+        },
+        navText: ['<i class="bi bi-chevron-left"></i>', '<i class="bi bi-chevron-right"></i>']
+    });
+});
+</script>
+
+{% if user.is_authenticated %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ratingModal = new bootstrap.Modal(document.getElementById('ratingModal'));
+    const movieTitleSpan = document.getElementById('movieTitle');
+    const modalMovieId = document.getElementById('modalMovieId');
+    const ratingInput = document.getElementById('ratingInput');
+    const starButtons = document.querySelectorAll('.star-btn');
+    
+    document.querySelectorAll('.rate-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const movieId = this.dataset.movieId;
+            const movieTitle = this.dataset.movieTitle;
+            
+            movieTitleSpan.textContent = movieTitle;
+            modalMovieId.value = movieId;
+            ratingInput.value = '3.0';
+            
+            // Reset star buttons
+            starButtons.forEach(star => {
+                star.classList.remove('btn-warning');
+                star.classList.add('btn-outline-warning');
+            });
+            
+            ratingModal.show();
+        });
+    });
+    
+    // Star rating selection
+    starButtons.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = this.dataset.rating;
+            ratingInput.value = rating;
+            
+            // Update star buttons appearance
+            starButtons.forEach(s => {
+                if (s.dataset.rating <= rating) {
+                    s.classList.add('btn-warning');
+                    s.classList.remove('btn-outline-warning');
+                } else {
+                    s.classList.remove('btn-warning');
+                    s.classList.add('btn-outline-warning');
+                }
+            });
+        });
+    });
+    
+    // Form submission
+    document.getElementById('ratingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const movieId = modalMovieId.value;
+        
+        fetch(`/movie/${movieId}/rate/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show';
+                alert.innerHTML = `
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('main').insertBefore(alert, document.querySelector('main').firstChild);
+                
+                ratingModal.hide();
+            } else {
+                alert('Error: ' + JSON.stringify(data.errors));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while submitting your rating.');
+        });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}
