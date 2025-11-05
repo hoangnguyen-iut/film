@@ -3,26 +3,26 @@
 
 {% block content %}
 <!-- Phần Hero chính với hình nền ấn tượng -->
-<div class="hero-section mb-5" style="height: 70vh; background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'); background-size: cover; background-position: center;">
+<div class="hero-section mb-3" style="height: 40vh; background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'); background-size: cover; background-position: center;">
     <div class="container h-100 d-flex align-items-center">
         <div class="hero-content text-white text-center">
-            <h1 class="display-3 fw-bold mb-3">Phim không giới hạn, chương trình TV và hơn thế nữa.</h1>
-            <p class="lead mb-4 fs-4">Xem ở mọi nơi. Hủy bất cứ lúc nào.</p>
+            <h1 class="h3 fw-bold mb-2">Phim không giới hạn, chương trình TV và hơn thế nữa.</h1>
+            <p class="mb-3">Xem ở mọi nơi. Hủy bất cứ lúc nào.</p>
             {% if not user.is_authenticated %}
             <div class="hero-buttons">
-                <a href="{% url 'recommender:register' %}" class="btn btn-danger btn-lg me-3">
+                <a href="{% url 'recommender:register' %}" class="btn btn-danger btn-sm me-2">
                     Bắt đầu <i class="bi bi-arrow-right"></i>
                 </a>
-                <a href="{% url 'recommender:login' %}" class="btn btn-outline-light btn-lg">
+                <a href="{% url 'recommender:login' %}" class="btn btn-outline-light btn-sm">
                     Đăng nhập
                 </a>
             </div>
             {% else %}
             <div class="hero-buttons">
-                <a href="{% url 'recommender:search' %}" class="btn btn-danger btn-lg me-3">
+                <a href="{% url 'recommender:search' %}" class="btn btn-danger btn-sm me-2">
                     Duyệt phim <i class="bi bi-play-fill"></i>
                 </a>
-                <a href="{% url 'recommender:recommendations' %}" class="btn btn-outline-light btn-lg">
+                <a href="{% url 'recommender:recommendations' %}" class="btn btn-outline-light btn-sm">
                     Đề xuất của tôi
                 </a>
             </div>
@@ -32,10 +32,10 @@
 </div>
 
 <!-- Các hàng phim -->
-<div class="container-fluid px-4">
+<div class="container-fluid px-3">
     <!-- Phim được đánh giá cao nhất -->
-    <section class="movie-row mb-5">
-        <h2 class="section-title mb-4">
+    <section class="movie-row mb-4">
+        <h2 class="section-title mb-3 h5">
             <i class="bi bi-star-fill text-warning me-2"></i>Phim được đánh giá cao nhất
         </h2>
         <div class="owl-carousel owl-theme movie-carousel">
@@ -44,21 +44,22 @@
                 <div class="card bg-dark border-0 movie-poster-card">
                     {% if movie.poster_url %}
                     <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}" 
-                         onerror="this.src='https://via.placeholder.com/300x450/333333/ffffff?text=Không+có+hình'">
+                         style="height: 200px; object-fit: cover;"
+                         onerror="this.src='https://via.placeholder.com/200x300/333333/ffffff?text=Không+có+hình'">
                     {% else %}
                     <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
-                         style="height: 300px;">
-                        <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
+                         style="height: 200px;">
+                        <i class="bi bi-film text-light" style="font-size: 2rem;"></i>
                     </div>
                     {% endif %}
                     
                     <div class="card-overlay">
                         <div class="overlay-content">
                             <h6 class="movie-title">{{ movie.title }}</h6>
-                            <p class="movie-year small text-muted">{{ movie.release_year }}</p>
+                            <p class="movie-year small text-light" style="opacity: 0.9;">{{ movie.release_year }}</p>
                             <div class="movie-rating">
                                 <i class="bi bi-star-fill text-warning"></i>
-                                <span class="ms-1">{{ movie.avg_rating|default:"N/A" }}</span>
+                                <span class="ms-1">{{ movie.avg_rating|default:"Chưa có" }}</span>
                             </div>
                             <div class="movie-actions mt-2">
                                 <a href="{% url 'recommender:movie_detail' movie.id %}" 
@@ -82,8 +83,8 @@
     </section>
 
     <!-- Phim phổ biến -->
-    <section class="movie-row mb-5">
-        <h2 class="section-title mb-4">
+    <section class="movie-row mb-4">
+        <h2 class="section-title mb-3 h5">
             <i class="bi bi-fire text-danger me-2"></i>Phim phổ biến hiện nay
         </h2>
         <div class="owl-carousel owl-theme movie-carousel">
@@ -92,21 +93,22 @@
                 <div class="card bg-dark border-0 movie-poster-card">
                     {% if movie.poster_url %}
                     <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}"
-                         onerror="this.src='https://via.placeholder.com/300x450/333333/ffffff?text=Không+có+hình'">
+                         style="height: 200px; object-fit: cover;"
+                         onerror="this.src='https://via.placeholder.com/200x300/333333/ffffff?text=Không+có+hình'">
                     {% else %}
                     <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
-                         style="height: 300px;">
-                        <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
+                         style="height: 200px;">
+                        <i class="bi bi-film text-light" style="font-size: 2rem;"></i>
                     </div>
                     {% endif %}
                     
                     <div class="card-overlay">
                         <div class="overlay-content">
                             <h6 class="movie-title">{{ movie.title }}</h6>
-                            <p class="movie-year small text-muted">{{ movie.release_year }}</p>
+                            <p class="movie-year small text-light" style="opacity: 0.9;">{{ movie.release_year }}</p>
                             <div class="movie-rating">
                                 <i class="bi bi-star-fill text-warning"></i>
-                                <span class="ms-1">{{ movie.avg_rating|default:"N/A" }}</span>
+                                <span class="ms-1">{{ movie.avg_rating|default:"Chưa có" }}</span>
                             </div>
                             <div class="movie-actions mt-2">
                                 <a href="{% url 'recommender:movie_detail' movie.id %}" 
@@ -141,21 +143,22 @@
                 <div class="card bg-dark border-0 movie-poster-card">
                     {% if movie.poster_url %}
                     <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}"
-                         onerror="this.src='https://via.placeholder.com/300x450/333333/ffffff?text=Không+có+hình'">
+                         style="height: 200px; object-fit: cover;"
+                         onerror="this.src='https://via.placeholder.com/200x300/333333/ffffff?text=Không+có+hình'">
                     {% else %}
                     <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
-                         style="height: 300px;">
-                        <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
+                         style="height: 200px;">
+                        <i class="bi bi-film text-light" style="font-size: 2rem;"></i>
                     </div>
                     {% endif %}
                     
                     <div class="card-overlay">
                         <div class="overlay-content">
                             <h6 class="movie-title">{{ movie.title }}</h6>
-                            <p class="movie-year small text-muted">{{ movie.release_year }}</p>
+                            <p class="movie-year small text-light" style="opacity: 0.9;">{{ movie.release_year }}</p>
                             <div class="movie-rating">
                                 <i class="bi bi-star-fill text-warning"></i>
-                                <span class="ms-1">{{ movie.avg_rating|default:"N/A" }}</span>
+                                <span class="ms-1">{{ movie.avg_rating|default:"Chưa có" }}</span>
                             </div>
                             <div class="movie-actions mt-2">
                                 <a href="{% url 'recommender:movie_detail' movie.id %}" 
@@ -240,18 +243,18 @@
 {% block extra_js %}
 <script>
 $(document).ready(function(){
-    // Khởi tạo carousels
+    // Khởi tạo carousels với kích thước phù hợp máy tính bảng
     $('.movie-carousel').owlCarousel({
         loop: true,
-        margin: 15,
+        margin: 10,
         nav: true,
         dots: false,
         responsive: {
             0: { items: 2 },
             576: { items: 3 },
-            768: { items: 4 },
-            992: { items: 5 },
-            1200: { items: 6 }
+            768: { items: 3 },
+            992: { items: 4 },
+            1200: { items: 5 }
         },
         navText: ['<i class="bi bi-chevron-left"></i>', '<i class="bi bi-chevron-right"></i>']
     });

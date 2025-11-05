@@ -1,20 +1,26 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+.form-control::placeholder {
+    color: #cccccc !important;
+    opacity: 1 !important;
+}
+</style>
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
-        <div class="card bg-dark-custom border-0 shadow-lg">
-            <div class="card-body p-5">
+        <div class="card bg-dark border-light shadow-lg">
+            <div class="card-body p-4">
                 <div class="text-center mb-4">
                     <i class="bi bi-person-plus display-4 text-danger"></i>
-                    <h2 class="h3 mt-3 text-light">Create Account</h2>
-                    <p class="text-muted">Join MovieFlix to get personalized movie recommendations</p>
+                    <h2 class="h3 mt-3 text-light">Tạo tài khoản</h2>
+                    <p class="text-light-emphasis">Tham gia MovieFlix để nhận đề xuất phim cá nhân hóa</p>
                 </div>
 
                 {% if form.errors %}
                 <div class="alert alert-danger border-0">
                     <i class="bi bi-exclamation-triangle"></i> 
-                    Please correct the errors below.
+                    Vui lòng sửa các lỗi bên dưới.
                 </div>
                 {% endif %}
 
@@ -23,63 +29,63 @@
                     
                     <div class="mb-3">
                         <label for="id_username" class="form-label text-light">
-                            <i class="bi bi-person"></i> Username
+                            <i class="bi bi-person"></i> Tên đăng nhập
                         </label>
-                        <input type="text" name="username" class="form-control bg-dark text-light border-secondary {% if form.username.errors %}is-invalid{% endif %}" 
+                        <input type="text" name="username" class="form-control bg-dark text-light border-light {% if form.username.errors %}is-invalid{% endif %}" 
                                id="id_username" value="{{ form.username.value|default:'' }}" 
-                               placeholder="Choose a username" required autofocus>
+                               placeholder="Chọn tên đăng nhập" required autofocus style="color: #ffffff; background-color: #212529; border-color: #6c757d;">
                         {% if form.username.errors %}
                         <div class="invalid-feedback">
                             {{ form.username.errors.0 }}
                         </div>
                         {% endif %}
-                        <div class="form-text text-muted">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</div>
+                        <div class="form-text text-light" style="opacity: 0.9;">Bắt buộc. Tối đa 150 ký tự. Chỉ chữ cái, số và @/./+/-/_.</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="id_password1" class="form-label text-light">
-                            <i class="bi bi-lock"></i> Password
+                            <i class="bi bi-lock"></i> Mật khẩu
                         </label>
-                        <input type="password" name="password1" class="form-control bg-dark text-light border-secondary {% if form.password1.errors %}is-invalid{% endif %}" 
-                               id="id_password1" placeholder="Create a password" required>
+                        <input type="password" name="password1" class="form-control bg-dark text-light border-light {% if form.password1.errors %}is-invalid{% endif %}" 
+                               id="id_password1" placeholder="Tạo mật khẩu" required style="color: #ffffff; background-color: #212529; border-color: #6c757d;">
                         {% if form.password1.errors %}
                         <div class="invalid-feedback">
                             {{ form.password1.errors.0 }}
                         </div>
                         {% endif %}
-                        <div class="form-text text-muted">
+                        <div class="form-text text-light" style="opacity: 0.9;">
                             <small>
-                                Your password must contain at least 8 characters and can't be too common.
+                                Mật khẩu của bạn phải chứa ít nhất 8 ký tự và không được quá phổ biến.
                             </small>
                         </div>
                     </div>
 
                     <div class="mb-4">
                         <label for="id_password2" class="form-label text-light">
-                            <i class="bi bi-lock-fill"></i> Confirm Password
+                            <i class="bi bi-lock-fill"></i> Xác nhận mật khẩu
                         </label>
-                        <input type="password" name="password2" class="form-control bg-dark text-light border-secondary {% if form.password2.errors %}is-invalid{% endif %}" 
-                               id="id_password2" placeholder="Confirm your password" required>
+                        <input type="password" name="password2" class="form-control bg-dark text-light border-light {% if form.password2.errors %}is-invalid{% endif %}" 
+                               id="id_password2" placeholder="Xác nhận mật khẩu của bạn" required style="color: #ffffff; background-color: #212529; border-color: #6c757d;">
                         {% if form.password2.errors %}
                         <div class="invalid-feedback">
                             {{ form.password2.errors.0 }}
                         </div>
                         {% endif %}
-                        <div class="form-text text-muted">
-                            <small>Enter the same password as before, for verification.</small>
+                        <div class="form-text text-light" style="opacity: 0.9;">
+                            <small>Nhập cùng mật khẩu như trên để xác nhận.</small>
                         </div>
                     </div>
 
                     <div class="d-grid mb-3">
                         <button type="submit" class="btn btn-danger btn-lg">
-                            <i class="bi bi-person-plus"></i> Create Account
+                            <i class="bi bi-person-plus"></i> Tạo tài khoản
                         </button>
                     </div>
 
                     <div class="text-center">
-                        <p class="mb-0 text-muted">
-                            Already have an account? 
-                            <a href="{% url 'recommender:login' %}" class="text-danger text-decoration-none">Sign in here</a>
+                        <p class="mb-0 text-light" style="opacity: 0.9;">
+                            Đã có tài khoản? 
+                            <a href="{% url 'recommender:login' %}" class="text-danger text-decoration-none">Đăng nhập tại đây</a>
                         </p>
                     </div>
                 </form>

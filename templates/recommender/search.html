@@ -1,195 +1,219 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h1 class="h3 mb-4">
-                    <i class="bi bi-search text-primary"></i> Search Movies
-                </h1>
-                
-                <form method="get" class="row g-3">
-                    <div class="col-md-6">
-                        <label for="searchInput" class="form-label">Search by Title</label>
-                        <input type="text" class="form-control" id="searchInput" name="q" 
-                               value="{{ query }}" placeholder="Enter movie title...">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="genreSelect" class="form-label">Filter by Genre</label>
-                        <select class="form-select" id="genreSelect" name="genre">
-                            <option value="">All Genres</option>
-                            {% for genre in genres %}
-                            <option value="{{ genre }}" {% if genre_filter == genre %}selected{% endif %}>
-                                {{ genre }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-search"></i> Search
-                        </button>
-                    </div>
-                </form>
+<div class="container-fluid px-3">
+    <!-- Search Form Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark border-light shadow-sm mb-3">
+                <div class="card-body p-3">
+                    <h1 class="h4 mb-3 text-light">
+                        <i class="bi bi-search text-danger me-2"></i>Tìm kiếm phim
+                    </h1>
+                    
+                    <form method="get" class="row g-2">
+                        <div class="col-md-6">
+                            <label for="searchInput" class="form-label small text-light">Tìm theo tên phim</label>
+                            <input type="text" class="form-control form-control-sm bg-dark text-light border-light" 
+                                   id="searchInput" name="q" value="{{ query }}" placeholder="Nhập tên phim...">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="genreSelect" class="form-label small text-light">Lọc theo thể loại</label>
+                            <select class="form-select form-select-sm bg-dark text-light border-light" id="genreSelect" name="genre">
+                                <option value="">Tất cả thể loại</option>
+                                {% for genre in genres %}
+                                <option value="{{ genre }}" {% if genre_filter == genre %}selected{% endif %}>
+                                    {{ genre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-danger btn-sm w-100">
+                                <i class="bi bi-search"></i> Tìm kiếm
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
+    </div>
 
-        {% if query or genre_filter %}
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h5 mb-0">
-                {% if page_obj %}
-                Found {{ page_obj.paginator.count }} movie{{ page_obj.paginator.count|pluralize }}
-                {% endif %}
-            </h2>
-            
-            {% if query or genre_filter %}
-            <a href="{% url 'recommender:search' %}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-x-circle"></i> Clear Filters
-            </a>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        {% if page_obj %}
-        <div class="row">
-            {% for movie in page_obj %}
-            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
-                <div class="card h-100 shadow-sm movie-card">
-                    {% if movie.poster_url %}
-                    <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}" 
-                         style="height: 300px; object-fit: cover;">
-                    {% else %}
-                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
-                         style="height: 300px;">
-                        <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
-                    </div>
+    <!-- Results Section -->
+    {% if query or genre_filter %}
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 text-light mb-0">
+                    {% if page_obj %}
+                    <i class="bi bi-film text-danger me-2"></i>Tìm thấy {{ page_obj.paginator.count }} phim
                     {% endif %}
-                    
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">{{ movie.title }}</h5>
-                        <p class="card-text text-muted small">
-                            <i class="bi bi-calendar"></i> {{ movie.release_year }}
-                        </p>
-                        <p class="card-text small">
-                            {% with movie.genre|slice:":2" as genres %}
-                            {% for genre in genres %}
-                            <span class="badge bg-info text-dark me-1">{{ genre }}</span>
-                            {% endfor %}
-                            {% endwith %}
-                        </p>
-                        <p class="card-text small flex-grow-1">
-                            {{ movie.overview|truncatewords:15 }}
-                        </p>
-                        
-                        <div class="mt-auto">
-                            <div class="d-grid gap-2">
-                                <a href="{% url 'recommender:movie_detail' movie.id %}" 
-                                   class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-eye"></i> Details
-                                </a>
-                                {% if user.is_authenticated %}
-                                {% for rating_key, rating_value in user_rating.items %}
-                                    {% if rating_key == movie.id %}
-                                        {% with rating_value as rating %}
-                                        <button class="btn btn-warning btn-sm rate-btn" 
-                                                data-movie-id="{{ movie.id }}"
-                                                data-movie-title="{{ movie.title }}"
-                                                data-current-rating="{{ rating }}">
-                                            <i class="bi bi-star-fill"></i> {{ rating }}
-                                        </button>
-                                        {% endwith %}
-                                    {% endif %}
-                                {% empty %}
-                                <button class="btn btn-primary btn-sm rate-btn" 
-                                        data-movie-id="{{ movie.id }}"
-                                        data-movie-title="{{ movie.title }}"
-                                        data-current-rating="">
-                                    <i class="bi bi-star"></i> Rate
-                                </button>
+                </h2>
+                
+                {% if query or genre_filter %}
+                <a href="{% url 'recommender:search' %}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Movie Cards -->
+    {% if page_obj %}
+    <div class="row">
+        {% for movie in page_obj %}
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card bg-dark border-light h-100 movie-card">
+                {% if movie.poster_url %}
+                <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}" 
+                     style="height: 250px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                     style="height: 250px;">
+                    <i class="bi bi-film text-light" style="font-size: 2rem;"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body d-flex flex-column p-3">
+                    <h6 class="card-title text-light mb-2">{{ movie.title }}</h6>
+                            <p class="card-text text-light small mb-2" style="opacity: 0.9;">
+                                <i class="bi bi-calendar text-danger"></i> {{ movie.release_year }}
+                            </p>
+                            <p class="card-text small mb-2">
+                                {% with movie.genre|slice:":2" as genres %}
+                                {% for genre in genres %}
+                                <span class="badge bg-danger text-light me-1 small">{{ genre }}</span>
                                 {% endfor %}
-                                {% else %}
-                                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-secondary btn-sm">
-                                    <i class="bi bi-star"></i> Login to Rate
-                                </a>
+                                {% endwith %}
+                            </p>
+                            <p class="card-text text-light small flex-grow-1 mb-3" style="opacity: 0.9;">
+                                {{ movie.overview|truncatewords:12 }}
+                            </p>
+                    
+                    <div class="mt-auto">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'recommender:movie_detail' movie.id %}" 
+                               class="btn btn-outline-light btn-sm">
+                                <i class="bi bi-info-circle"></i> Chi tiết
+                            </a>
+                            {% if user.is_authenticated %}
+                            {% for rating_key, rating_value in user_rating.items %}
+                                {% if rating_key == movie.id %}
+                                    {% with rating_value as rating %}
+                                    <button class="btn btn-warning btn-sm rate-btn" 
+                                            data-movie-id="{{ movie.id }}"
+                                            data-movie-title="{{ movie.title }}"
+                                            data-current-rating="{{ rating }}">
+                                        <i class="bi bi-star-fill"></i> {{ rating }}
+                                    </button>
+                                    {% endwith %}
                                 {% endif %}
-                            </div>
+                            {% empty %}
+                            <button class="btn btn-outline-warning btn-sm rate-btn" 
+                                    data-movie-id="{{ movie.id }}"
+                                    data-movie-title="{{ movie.title }}"
+                                    data-current-rating="">
+                                <i class="bi bi-star"></i> Đánh giá
+                            </button>
+                            {% endfor %}
+                            {% else %}
+                            <a href="{% url 'recommender:login' %}?next={{ request.path }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-star"></i> Đăng nhập để đánh giá
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
+    </div>
 
-        <!-- Pagination -->
-        {% if page_obj.has_other_pages %}
-        <nav aria-label="Search results pagination">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?q={{ query }}&genre={{ genre_filter }}&page={{ page_obj.previous_page_number }}">
-                        <i class="bi bi-chevron-left"></i> Previous
-                    </a>
-                </li>
-                {% endif %}
-
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ num }}</span>
-                    </li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Phân trang kết quả tìm kiếm">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?q={{ query }}&genre={{ genre_filter }}&page={{ num }}">{{ num }}</a>
+                        <a class="page-link bg-dark text-light border-light" 
+                           href="?q={{ query }}&genre={{ genre_filter }}&page={{ page_obj.previous_page_number }}">
+                            <i class="bi bi-chevron-left"></i> Trước
+                        </a>
                     </li>
                     {% endif %}
-                {% endfor %}
 
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?q={{ query }}&genre={{ genre_filter }}&page={{ page_obj.next_page_number }}">
-                        Next <i class="bi bi-chevron-right"></i>
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link bg-danger border-danger">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link bg-dark text-light border-light" 
+                               href="?q={{ query }}&genre={{ genre_filter }}&page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
 
-        {% elif query or genre_filter %}
-        <div class="text-center py-5">
-            <i class="bi bi-search display-1 text-muted"></i>
-            <h3 class="text-muted">No movies found</h3>
-            <p class="text-muted">Try adjusting your search criteria</p>
-            <a href="{% url 'recommender:search' %}" class="btn btn-primary">
-                <i class="bi bi-arrow-left"></i> Back to Search
-            </a>
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link bg-dark text-light border-light" 
+                           href="?q={{ query }}&genre={{ genre_filter }}&page={{ page_obj.next_page_number }}">
+                            Tiếp <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
-        {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-film display-1 text-muted"></i>
-            <h3 class="text-muted">Browse Movies</h3>
-            <p class="text-muted">Use the search form above to find movies</p>
-        </div>
-        {% endif %}
     </div>
+    {% endif %}
+
+    {% elif query or genre_filter %}
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center py-4">
+                <i class="bi bi-search display-1 text-light" style="opacity: 0.9;"></i>
+                <h3 class="text-light mt-3" style="opacity: 0.9;">Không tìm thấy phim nào</h3>
+                <p class="text-light" style="opacity: 0.9;">Hãy thử điều chỉnh tiêu chí tìm kiếm của bạn</p>
+                <a href="{% url 'recommender:search' %}" class="btn btn-danger mt-2">
+                    <i class="bi bi-arrow-left"></i> Quay lại tìm kiếm
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center py-4">
+                <i class="bi bi-film display-1 text-light" style="opacity: 0.9;"></i>
+                <h3 class="text-light mt-3" style="opacity: 0.9;">Duyệt phim</h3>
+                <p class="text-light" style="opacity: 0.9;">Sử dụng biểu mẫu tìm kiếm ở trên để tìm phim</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Rating Modal -->
 {% if user.is_authenticated %}
 <div class="modal fade" id="ratingModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Rate <span id="movieTitle"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content bg-dark text-light border-light">
+            <div class="modal-header border-light">
+                <h5 class="modal-title">Đánh giá <span id="movieTitle"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="ratingForm" method="post">
                     {% csrf_token %}
                     <input type="hidden" name="movie_id" id="modalMovieId">
                     <div class="mb-3">
-                        <label class="form-label">Your Rating (1-5 stars)</label>
+                        <label class="form-label">Đánh giá của bạn (1-5 sao)</label>
                         <div class="rating-stars mb-3 text-center">
                             {% for i in "12345" %}
                             <button type="button" class="btn btn-outline-warning star-btn" data-rating="{{ i }}">
@@ -197,14 +221,14 @@
                             </button>
                             {% endfor %}
                         </div>
-                        <input type="number" class="form-control" name="rating" id="ratingInput" 
-                               min="1" max="5" step="0.5" required>
+                        <input type="number" class="form-control bg-dark text-light border-light" 
+                               name="rating" id="ratingInput" min="1" max="5" step="0.5" required>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" form="ratingForm" class="btn btn-primary">Submit Rating</button>
+            <div class="modal-footer border-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" form="ratingForm" class="btn btn-danger">Gửi đánh giá</button>
             </div>
         </div>
     </div>
@@ -293,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (rateBtn) {
                     rateBtn.innerHTML = `<i class="bi bi-star-fill"></i> ${ratingInput.value}`;
                     rateBtn.classList.add('btn-warning');
-                    rateBtn.classList.remove('btn-primary');
+                    rateBtn.classList.remove('btn-outline-warning');
                     rateBtn.dataset.currentRating = ratingInput.value;
                 }
                 
@@ -308,12 +332,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 ratingModal.hide();
             } else {
-                alert('Error: ' + JSON.stringify(data.errors));
+                alert('Lỗi: ' + JSON.stringify(data.errors));
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while submitting your rating.');
+            console.error('Lỗi:', error);
+            alert('Đã xảy ra lỗi khi gửi đánh giá của bạn.');
         });
     });
 });

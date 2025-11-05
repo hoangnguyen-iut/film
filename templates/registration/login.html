@@ -3,30 +3,30 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
-        <div class="card bg-dark-custom border-0 shadow-lg">
-            <div class="card-body p-5">
+        <div class="card bg-dark border-light shadow-lg">
+            <div class="card-body p-4">
                 <div class="text-center mb-4">
                     <i class="bi bi-person-circle display-4 text-danger"></i>
-                    <h2 class="h3 mt-3 text-light">Login to MovieFlix</h2>
-                    <p class="text-muted">Sign in to get personalized movie recommendations</p>
+                    <h2 class="h3 mt-3 text-light">Đăng nhập MovieFlix</h2>
+                    <p class="text-light" style="opacity: 0.9;">Đăng nhập để nhận đề xuất phim cá nhân hóa</p>
                 </div>
 
                 {% if form.errors %}
                 <div class="alert alert-danger border-0">
                     <i class="bi bi-exclamation-triangle"></i> 
-                    Your username and password didn't match. Please try again.
+                    Tên đăng nhập và mật khẩu không khớp. Vui lòng thử lại.
                 </div>
                 {% endif %}
 
                 {% if next %}
                     {% if user.is_authenticated %}
                     <div class="alert alert-warning border-0">
-                        Your account doesn't have access to this page. To proceed,
-                        please login with an account that has access.
+                        Tài khoản của bạn không có quyền truy cập trang này. Để tiếp tục,
+                        vui lòng đăng nhập bằng tài khoản có quyền truy cập.
                     </div>
                     {% else %}
                     <div class="alert alert-info border-0">
-                        Please login to see this page.
+                        Vui lòng đăng nhập để xem trang này.
                     </div>
                     {% endif %}
                 {% endif %}
@@ -36,32 +36,32 @@
                     
                     <div class="mb-3">
                         <label for="id_username" class="form-label text-light">
-                            <i class="bi bi-person"></i> Username
+                            <i class="bi bi-person"></i> Tên đăng nhập
                         </label>
-                        <input type="text" name="username" class="form-control bg-dark text-light border-secondary" 
-                               id="id_username" placeholder="Enter your username" required autofocus>
+                        <input type="text" name="username" class="form-control bg-dark text-light border-light" 
+                               id="id_username" placeholder="Nhập tên đăng nhập" required autofocus>
                     </div>
 
                     <div class="mb-3">
                         <label for="id_password" class="form-label text-light">
-                            <i class="bi bi-lock"></i> Password
+                            <i class="bi bi-lock"></i> Mật khẩu
                         </label>
-                        <input type="password" name="password" class="form-control bg-dark text-light border-secondary" 
-                               id="id_password" placeholder="Enter your password" required>
+                        <input type="password" name="password" class="form-control bg-dark text-light border-light" 
+                               id="id_password" placeholder="Nhập mật khẩu" required>
                     </div>
 
                     <input type="hidden" name="next" value="{{ next }}">
 
                     <div class="d-grid mb-3">
                         <button type="submit" class="btn btn-danger btn-lg">
-                            <i class="bi bi-box-arrow-in-right"></i> Sign In
+                            <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
                         </button>
                     </div>
 
                     <div class="text-center">
-                        <p class="mb-0 text-muted">
-                            Don't have an account? 
-                            <a href="{% url 'recommender:register' %}" class="text-danger text-decoration-none">Create one here</a>
+                        <p class="mb-0 text-light" style="opacity: 0.9;">
+                            Chưa có tài khoản? 
+                            <a href="{% url 'recommender:register' %}" class="text-danger text-decoration-none">Tạo tài khoản tại đây</a>
                         </p>
                     </div>
                 </form>
