@@ -16,10 +16,10 @@ from recommender.models import Movie, Rating
 from django.contrib.auth.models import User
 
 # Configuration
-TMDB_API_KEY = "YOUR_TMDB_KEY"  # Replace with actual TMDb API key
+TMDB_API_KEY = ""  # Skip TMDb API for now
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 SLEEP_TIME = 0.1  # Rate limiting sleep time in seconds
-MAX_MOVIES = 5000  # Only process first 5000 movies for testing
+MAX_MOVIES = 100  # Only process first 100 movies for testing
 
 def get_tmdb_movie_details(tmdb_id):
     """Get movie details from TMDb API"""
@@ -47,111 +47,116 @@ def get_tmdb_movie_details(tmdb_id):
         return None, None
 
 def populate_movies():
-    """Populate Movie objects from movies.csv and TMDb API"""
-    movies_csv_path = 'data/ml-20m/movies.csv'
-    links_csv_path = 'data/ml-20m/links.csv'
+    """Populate Movie objects with sample data (no TMDb API)"""
+    # Sample movie data for testing
+    sample_movies = [
+        {
+            'title': 'The Shawshank Redemption',
+            'genre': 'Drama',
+            'release_year': 1994,
+            'overview': 'Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=Shawshank',
+            'director': 'Frank Darabont'
+        },
+        {
+            'title': 'The Godfather',
+            'genre': 'Crime|Drama',
+            'release_year': 1972,
+            'overview': 'The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=Godfather',
+            'director': 'Francis Ford Coppola'
+        },
+        {
+            'title': 'The Dark Knight',
+            'genre': 'Action|Crime|Drama',
+            'release_year': 2008,
+            'overview': 'When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=Dark+Knight',
+            'director': 'Christopher Nolan'
+        },
+        {
+            'title': 'Pulp Fiction',
+            'genre': 'Crime|Drama',
+            'release_year': 1994,
+            'overview': 'The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=Pulp+Fiction',
+            'director': 'Quentin Tarantino'
+        },
+        {
+            'title': 'Forrest Gump',
+            'genre': 'Drama|Romance',
+            'release_year': 1994,
+            'overview': 'The presidencies of Kennedy and Johnson, the Vietnam War, the Watergate scandal and other historical events unfold from the perspective of an Alabama man with an IQ of 75.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=Forrest+Gump',
+            'director': 'Robert Zemeckis'
+        },
+        {
+            'title': 'Inception',
+            'genre': 'Action|Adventure|Sci-Fi',
+            'release_year': 2010,
+            'overview': 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=Inception',
+            'director': 'Christopher Nolan'
+        },
+        {
+            'title': 'The Matrix',
+            'genre': 'Action|Sci-Fi',
+            'release_year': 1999,
+            'overview': 'A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=Matrix',
+            'director': 'Lana Wachowski, Lilly Wachowski'
+        },
+        {
+            'title': 'Goodfellas',
+            'genre': 'Biography|Crime|Drama',
+            'release_year': 1990,
+            'overview': 'The story of Henry Hill and his life in the mob, covering his relationship with his wife Karen Hill and his mob partners Jimmy Conway and Tommy DeVito.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=Goodfellas',
+            'director': 'Martin Scorsese'
+        },
+        {
+            'title': 'The Silence of the Lambs',
+            'genre': 'Crime|Drama|Thriller',
+            'release_year': 1991,
+            'overview': 'A young F.B.I. cadet must receive the help of an incarcerated and manipulative cannibal killer to help catch another serial killer.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=Silence+Lambs',
+            'director': 'Jonathan Demme'
+        },
+        {
+            'title': 'The Lord of the Rings: The Fellowship of the Ring',
+            'genre': 'Adventure|Drama|Fantasy',
+            'release_year': 2001,
+            'overview': 'A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring and save Middle-earth from the Dark Lord Sauron.',
+            'poster_url': 'https://via.placeholder.com/300x450/333333/ffffff?text=LOTR',
+            'director': 'Peter Jackson'
+        }
+    ]
     
-    # Read links to get TMDb IDs
-    tmdb_mapping = {}
-    try:
-        with open(links_csv_path, 'r', encoding='utf-8') as links_file:
-            reader = csv.DictReader(links_file)
-            for row in reader:
-                movie_id = int(row['movieId'])
-                tmdb_id = row['tmdbId'] if row['tmdbId'] != '' else None
-                if tmdb_id:
-                    tmdb_mapping[movie_id] = int(tmdb_id)
-        print(f"Loaded TMDb mapping for {len(tmdb_mapping)} movies")
-    except FileNotFoundError:
-        print(f"Error: {links_csv_path} not found")
-        return
-    except Exception as e:
-        print(f"Error reading links file: {e}")
-        return
-    
-    # Read movies and create Movie objects
     movies_to_create = []
-    processed_count = 0
-    skipped_count = 0
-    
-    try:
-        with open(movies_csv_path, 'r', encoding='utf-8') as movies_file:
-            reader = csv.DictReader(movies_file)
-            for row in reader:
-                if processed_count >= MAX_MOVIES:
-                    break
-                    
-                movie_id = int(row['movieId'])
-                title = row['title']
-                genres = row['genres']
-                
-                # Skip if no TMDb ID
-                if movie_id not in tmdb_mapping:
-                    skipped_count += 1
-                    continue
-                
-                tmdb_id = tmdb_mapping[movie_id]
-                
-                # Get additional details from TMDb API
-                overview, poster_url = get_tmdb_movie_details(tmdb_id)
-                time.sleep(SLEEP_TIME)  # Rate limiting
-                
-                # Skip if TMDb API failed
-                if overview is None:
-                    skipped_count += 1
-                    continue
-                
-                # Extract release year from title (format: "Title (Year)")
-                release_year = None
-                if title.endswith(')'):
-                    try:
-                        year_str = title.split('(')[-1].rstrip(')')
-                        if year_str.isdigit() and len(year_str) == 4:
-                            release_year = int(year_str)
-                    except (ValueError, IndexError):
-                        pass
-                
-                # Create Movie object
-                movie = Movie(
-                    title=title,
-                    genre=genres,
-                    director="Unknown",  # Not available in the dataset
-                    release_year=release_year or 2000,  # Default if not found
-                    overview=overview,
-                    poster_url=poster_url,
-                    tmdb_id=tmdb_id
-                )
-                movies_to_create.append(movie)
-                processed_count += 1
-                
-                if processed_count % 100 == 0:
-                    print(f"Processed {processed_count} movies...")
-    
-    except FileNotFoundError:
-        print(f"Error: {movies_csv_path} not found")
-        return
-    except Exception as e:
-        print(f"Error reading movies file: {e}")
-        return
+    for i, movie_data in enumerate(sample_movies):
+        movie = Movie(
+            title=movie_data['title'],
+            genre=movie_data['genre'],
+            director=movie_data['director'],
+            release_year=movie_data['release_year'],
+            overview=movie_data['overview'],
+            poster_url=movie_data['poster_url'],
+            tmdb_id=1000 + i  # Simple fake TMDb IDs
+        )
+        movies_to_create.append(movie)
     
     # Bulk create movies
-    if movies_to_create:
-        try:
-            Movie.objects.bulk_create(movies_to_create, ignore_conflicts=True)
-            print(f"Successfully created {len(movies_to_create)} movies")
-            print(f"Skipped {skipped_count} movies (no TMDb ID or API failed)")
-        except Exception as e:
-            print(f"Error bulk creating movies: {e}")
-    else:
-        print("No movies to create")
+    try:
+        Movie.objects.bulk_create(movies_to_create, ignore_conflicts=True)
+        print(f"Successfully created {len(movies_to_create)} sample movies")
+    except Exception as e:
+        print(f"Error bulk creating movies: {e}")
 
 def populate_ratings():
-    """Populate Rating objects from ratings.csv"""
-    ratings_csv_path = 'data/ml-20m/ratings.csv'
-    
-    # Get all movie IDs from the database for mapping
-    movie_mapping = {movie.tmdb_id: movie for movie in Movie.objects.all()}
-    if not movie_mapping:
+    """Populate Rating objects with sample data"""
+    # Get all movies from the database
+    movies = list(Movie.objects.all())
+    if not movies:
         print("No movies found in database. Please run populate_movies first.")
         return
     
@@ -163,71 +168,26 @@ def populate_ratings():
     if created:
         print("Created test user")
     
+    # Create sample ratings for the test user
     ratings_to_create = []
-    processed_count = 0
-    skipped_count = 0
-    
-    try:
-        with open(ratings_csv_path, 'r', encoding='utf-8') as ratings_file:
-            reader = csv.DictReader(ratings_file)
-            for row in reader:
-                # We'll only create ratings for the test user to avoid too many records
-                # In a real scenario, you might want to handle multiple users
-                user_id = int(row['userId'])
-                if user_id != 1:  # Only use first user for testing
-                    continue
-                
-                movie_id = int(row['movieId'])
-                rating_value = float(row['rating'])
-                timestamp = int(row['timestamp'])
-                
-                # Find the movie by its original ID (we need to map back to TMDb ID)
-                # This is simplified - in practice, you'd need a better mapping
-                # For now, we'll skip ratings for movies not in our database
-                movie = None
-                for m in movie_mapping.values():
-                    # This is a hack - in a real implementation, you'd store the original movieId
-                    # For now, we'll just create ratings for the first few movies
-                    if len(ratings_to_create) < 1000:  # Limit to 1000 ratings for testing
-                        movie = m
-                        break
-                
-                if not movie:
-                    skipped_count += 1
-                    continue
-                
-                # Create Rating object
-                rating = Rating(
-                    user=test_user,
-                    movie=movie,
-                    rating=rating_value
-                )
-                ratings_to_create.append(rating)
-                processed_count += 1
-                
-                if processed_count % 100 == 0:
-                    print(f"Processed {processed_count} ratings...")
-                    
-                if processed_count >= 1000:  # Stop after 1000 ratings
-                    break
-    
-    except FileNotFoundError:
-        print(f"Error: {ratings_csv_path} not found")
-        return
-    except Exception as e:
-        print(f"Error reading ratings file: {e}")
-        return
+    for movie in movies:
+        # Assign random ratings between 3.0 and 5.0 for testing
+        import random
+        rating_value = round(random.uniform(3.0, 5.0), 1)
+        
+        rating = Rating(
+            user=test_user,
+            movie=movie,
+            rating=rating_value
+        )
+        ratings_to_create.append(rating)
     
     # Bulk create ratings
-    if ratings_to_create:
-        try:
-            Rating.objects.bulk_create(ratings_to_create, ignore_conflicts=True)
-            print(f"Successfully created {len(ratings_to_create)} ratings")
-            print(f"Skipped {skipped_count} ratings")
-        except Exception as e:
-            print(f"Error bulk creating ratings: {e}")
-    else:
-        print("No ratings to create")
+    try:
+        Rating.objects.bulk_create(ratings_to_create, ignore_conflicts=True)
+        print(f"Successfully created {len(ratings_to_create)} sample ratings")
+    except Exception as e:
+        print(f"Error bulk creating ratings: {e}")
 
 @transaction.atomic
 def main():
